@@ -1,7 +1,6 @@
 package com.dabsquared.gitlabjenkins;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
@@ -160,7 +159,6 @@ public class GitLabWebHook implements UnprotectedRootAction {
         	throw HttpResponses.ok();
         }
 
-
         String lastPath = paths.get(paths.size()-1);
         String firstPath = paths.get(0);
         if(lastPath.equals("status.json") && !firstPath.equals("!builds")) {
@@ -186,7 +184,6 @@ public class GitLabWebHook implements UnprotectedRootAction {
         } else{
             LOGGER.warning("Dynamic request mot met: First path: '" + firstPath + "' late path: '" + lastPath + "'");
         }
-
 
         throw HttpResponses.ok();
 
@@ -367,9 +364,7 @@ public class GitLabWebHook implements UnprotectedRootAction {
 
     public void generatePushBuild(String json, Job project, StaplerRequest req, StaplerResponse rsp) {
         GitLabPushRequest request = GitLabPushRequest.create(json);
-
         String repositoryUrl = request.getRepository().getUrl();
-
         if (repositoryUrl == null) {
 
             LOGGER.log(Level.WARNING, "No repository url found.");
@@ -392,13 +387,11 @@ public class GitLabWebHook implements UnprotectedRootAction {
             }
 
             if (trigger == null) {
-
                 return;
             }
 
             if(trigger.getCiSkip() && request.getLastCommit() != null) {
                 if(request.getLastCommit().getMessage().contains("[ci-skip]")) {
-
                     LOGGER.log(Level.INFO, "Skipping due to ci-skip.");
                     return;
                 }
@@ -407,12 +400,10 @@ public class GitLabWebHook implements UnprotectedRootAction {
             trigger.onPost(request);
 
             if (trigger.getTriggerOpenMergeRequestOnPush()) {
-
             	// Fetch and build open merge requests with the same source branch
             	buildOpenMergeRequests(trigger, request.getProject_id(), request.getRef());
             }
         } finally {
-
             SecurityContextHolder.getContext().setAuthentication(old);
         }
     }
@@ -471,7 +462,6 @@ public class GitLabWebHook implements UnprotectedRootAction {
 
     public void generateMergeRequestBuild(String json, Job project, StaplerRequest req, StaplerResponse rsp) {
         GitLabMergeRequest request = GitLabMergeRequest.create(json);
-
         if(request.getObjectAttribute().getState().equals("closed")) {
         	LOGGER.log(Level.INFO, "Closed Merge Request, no build started");
             return;

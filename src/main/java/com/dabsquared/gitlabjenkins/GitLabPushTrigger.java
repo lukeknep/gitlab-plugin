@@ -7,7 +7,6 @@ import hudson.model.AutoCompletionCandidates;
 import hudson.model.Item;
 import hudson.model.ParameterValue;
 import hudson.model.Result;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Job;
@@ -164,8 +163,6 @@ public class GitLabPushTrigger extends Trigger<Job<?, ?>> {
 
     // executes when the Trigger receives a push request
     public void onPost(final GitLabPushRequest req) {
-    	boolean allowBuild = allowAllBranches || (allowAllBranches || this.isBranchAllowed(this.getSourceBranch(req)));
-
     	final ParameterizedJobMixIn scheduledJob = new ParameterizedJobMixIn() {
             @Override
             protected Job asJob() {
@@ -173,7 +170,7 @@ public class GitLabPushTrigger extends Trigger<Job<?, ?>> {
             }
         };
 
-        if (triggerOnPush && (allowBuild)) {
+        if (triggerOnPush && (allowAllBranches || this.isBranchAllowed(this.getSourceBranch(req)))) {
             getDescriptor().queue.execute(new Runnable() {
 
                 public void run() {
@@ -272,12 +269,12 @@ public class GitLabPushTrigger extends Trigger<Job<?, ?>> {
 	                String name = " #" + job.getNextBuildNumber();
 	                GitLabMergeCause cause = createGitLabMergeCause(req);
 	                Action[] actions = createActions(req);
-                      ParameterizedJobMixIn scheduledJob = new ParameterizedJobMixIn() {
-                          @Override
-                          protected Job asJob() {
-                              return job;
-                          }
-                      };
+                    ParameterizedJobMixIn scheduledJob = new ParameterizedJobMixIn() {
+                      @Override
+                      protected Job asJob() {
+                          return job;
+                      }
+                    };
 
                     boolean scheduled;
                     if (job instanceof AbstractProject<?,?>) {
@@ -559,10 +556,6 @@ public class GitLabPushTrigger extends Trigger<Job<?, ?>> {
         }
 
         private List<String> getProjectBranches(final Job<?, ?> job) throws IOException, IllegalStateException {
-            /*if (!(job instanceof AbstractProject<?, ?>)) {
-                return Lists.newArrayList();
-            }*/
-
             final URIish sourceRepository = getSourceRepoURLDefault(job);
             if (sourceRepository == null) {
                 throw new IllegalStateException(Messages.GitLabPushTrigger_NoSourceRepository());
